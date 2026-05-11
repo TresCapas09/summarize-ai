@@ -1,0 +1,47 @@
+/* ── Global Scrollbar Styles ── */
+html, body {
+  scrollbar-width: thin;
+  scrollbar-color: #e2e8f0 transparent;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #e2e8f0;
+  border-radius: 20px;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #1e293b;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #cbd5e1;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #334155;
+}
+
+/* ── Body font ── */
+body {
+  font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+}
+
+/* ── Shimmer animation for skeleton loading ── */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(300%);
+  }
+}
+
