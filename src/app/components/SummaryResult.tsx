@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Sparkles,
   Copy,
@@ -15,9 +15,14 @@ import {
   TrendingDown,
   BookOpen,
   Timer,
+  Trash2,
 } from 'lucide-react';
-import type { SummarizationResult, SummarizationMode } from '../types/summary';
+import type { SummarizationResult, SummarizationMode, SummaryComment } from '../types/summary';
 import { toast } from 'sonner';
+import { CommentToolbar } from './CommentToolbar';
+import { Avatar } from './Avatar';
+import { SmartPopover } from './SmartPopover';
+import type { AvatarId } from '../types/profile';
 
 interface SummaryResultProps {
   result: SummarizationResult | null;
@@ -26,6 +31,12 @@ interface SummaryResultProps {
   processingStage: string;
   onSave: () => void;
   isSaved: boolean;
+  /** Current comments for this summary */
+  comments: SummaryComment[];
+  /** Callback to update comments (bubbles up to Dashboard) */
+  onCommentsChange: (comments: SummaryComment[]) => void;
+  /** Current user info for authoring comments */
+  currentUser?: { id: string; displayName: string; avatar: string; avatarUrl?: string };
 }
 
 type Tab = 'summary' | 'keypoints' | 'stats';
@@ -44,12 +55,21 @@ export function SummaryResult({
   processingStage,
   onSave,
   isSaved,
+  comments,
+  onCommentsChange,
+  currentUser,
 }: SummaryResultProps) {
   const [activeTab, setActiveTab] = useState<Tab>('summary');
   const [displayedText, setDisplayedText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [copied, setCopied] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Comment toolbar state
+  const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null);
+  const [selectionRange, setSelectionRange] = useState<{ start: number; end: number; text: string } | null>(null);
+  const [activeComment, setActiveComment] = useState<{ id: string; rect: DOMRect; isLocked: boolean } | null>(null);
+  const summaryPanelRef = useRef<HTMLDivElement>(null);
 
   // Typewriter animation whenever result changes
   useEffect(() => {
@@ -91,6 +111,199 @@ export function SummaryResult({
     toast.success('Summary copied to clipboard');
     setTimeout(() => setCopied(false), 2000);
   }
+
+  /** Detect text selection and show the comment toolbar */
+  const handleMouseUp = useCallback(() => {
+    if (isTyping) return;
+    const selection = window.getSelection();
+    if (!selection || selection.isCollapsed || selection.rangeCount === 0) {
+      return; // Don't dismiss — let outside click handle it
+    }
+    const text = selection.toString().trim();
+    if (text.length < 3) return;
+
+    // Calculate character offsets within the displayed text
+    const startIdx = displayedText.indexOf(text);
+    if (startIdx === -1) return;
+
+    const range = selection.getRangeAt(0);
+    const rect = range.getBoundingClientRect();
+    setSelectionRange({ start: startIdx, end: startIdx + text.length, text });
+    setAnchorRect(rect);
+  }, [isTyping, displayedText]);
+
+  /** Add a comment to the current selection */
+  function handleAddComment(commentText: string) {
+    if (!selectionRange || !currentUser) return;
+    const newComment: SummaryComment = {
+      id: `comment_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+      snippetText: selectionRange.text,
+      startIndex: selectionRange.start,
+      endIndex: selectionRange.end,
+      comment: commentText,
+      userId: currentUser.id,
+      userName: currentUser.displayName,
+      userAvatar: currentUser.avatar,
+      userAvatarUrl: currentUser.avatarUrl,
+      createdAt: new Date().toISOString(),
+    };
+    onCommentsChange([...comments, newComment]);
+    setAnchorRect(null);
+    setSelectionRange(null);
+    window.getSelection()?.removeAllRanges();
+    toast.success('Comment added!', { duration: 2000 });
+  }
+
+  /** Delete a comment */
+  function handleDeleteComment(id: string) {
+    onCommentsChange(comments.filter(c => c.id !== id));
+    setActiveComment(null);
+    toast.success('Comment removed', { duration: 1500 });
+  }
+
+  // Handle clicking away to dismiss locked comments
+  useEffect(() => {
+    function handleClickAway(e: MouseEvent) {
+      if (!activeComment || !activeComment.isLocked) return;
+      
+      // If we clicked something that isn't the highlight or the popover, close it
+      const target = e.target as HTMLElement;
+      const isPopover = target.closest('[data-popover="true"]');
+      const isHighlight = target.closest('[data-highlight="true"]');
+      
+      if (!isPopover && !isHighlight) {
+        setActiveComment(null);
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickAway);
+    return () => document.removeEventListener('mousedown', handleClickAway);
+  }, [activeComment]);
+
+  /**
+   * Render summary text with comment highlights.
+   * Splits the text into segments: plain text and highlighted spans.
+   */
+  function renderAnnotatedText(text: string) {
+    // Combine real comments and the active selection (if any)
+    const allAnnotations = [...comments];
+    if (selectionRange && !isTyping) {
+      allAnnotations.push({
+        id: 'pending-selection',
+        snippetText: selectionRange.text,
+        startIndex: selectionRange.start,
+        endIndex: selectionRange.end,
+        comment: '',
+        userId: 'pending',
+        userName: '',
+        userAvatar: '',
+        createdAt: '',
+      });
+    }
+
+    if (allAnnotations.length === 0) {
+      return text;
+    }
+
+    // Sort comments by start index
+    const sorted = [...allAnnotations].sort((a, b) => a.startIndex - b.startIndex);
+    const segments: React.ReactNode[] = [];
+    let cursor = 0;
+
+    for (const c of sorted) {
+      // Validate the comment still matches the text
+      const actualSnippet = text.slice(c.startIndex, c.endIndex);
+      if (actualSnippet !== c.snippetText) continue;
+
+      // Plain text before this highlight
+      if (c.startIndex > cursor) {
+        segments.push(text.slice(cursor, c.startIndex));
+      }
+
+      const isPending = c.id === 'pending-selection';
+
+      // Highlighted span
+      segments.push(
+        <span
+          key={c.id}
+          data-highlight="true"
+          className={`relative inline rounded-sm transition-all duration-200 cursor-pointer 
+            ${isPending 
+              ? 'bg-indigo-500/30 border-b-2 border-indigo-500' 
+              : 'bg-amber-100/60 dark:bg-amber-800/20 border-b-2 border-amber-300 dark:border-amber-600 hover:bg-amber-200/80 dark:hover:bg-amber-700/30'
+            }`}
+          onMouseEnter={(e) => {
+            if (isPending) return;
+            // Only set if not already locked to a different comment
+            if (!activeComment?.isLocked) {
+              setActiveComment({ id: c.id, rect: e.currentTarget.getBoundingClientRect(), isLocked: false });
+            }
+          }}
+          onMouseLeave={() => {
+            if (isPending) return;
+            // Only clear if it's not locked
+            if (activeComment?.id === c.id && !activeComment.isLocked) {
+              setActiveComment(null);
+            }
+          }}
+          onClick={(e) => {
+            if (isPending) return;
+            e.stopPropagation();
+            setActiveComment({ id: c.id, rect: e.currentTarget.getBoundingClientRect(), isLocked: true });
+          }}
+        >
+          {c.snippetText}
+
+          {/* Hover tooltip using SmartPopover (only for real comments) */}
+          {!isPending && (
+            <SmartPopover
+              isOpen={activeComment?.id === c.id}
+              anchorRect={activeComment?.rect ?? null}
+            >
+              <div 
+                data-popover="true"
+                className="flex items-start gap-2.5 px-3.5 py-3 rounded-xl bg-slate-800/95 backdrop-blur-md border border-slate-600/50 shadow-2xl shadow-black/40 min-w-[220px] max-w-[320px]"
+              >
+                <div className="shrink-0 mt-0.5">
+                  <Avatar 
+                    avatarId={c.userAvatar as AvatarId} 
+                    avatarUrl={c.userAvatarUrl}
+                    size="sm" 
+                  />
+                </div>
+                <div className="flex flex-col gap-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[11px] font-bold text-slate-200 truncate">{c.userName}</span>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleDeleteComment(c.id); }}
+                      className="p-0.5 rounded hover:bg-red-500/20 text-slate-500 hover:text-red-400 transition-colors shrink-0"
+                      title="Delete comment"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  </div>
+                  <div className="text-xs text-slate-300 leading-relaxed break-words">{c.comment}</div>
+                  <div className="text-[9px] text-slate-500">
+                    {new Date(c.createdAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                  </div>
+                </div>
+              </div>
+            </SmartPopover>
+          )}
+        </span>
+      );
+
+      cursor = c.endIndex;
+    }
+
+    // Remaining text
+    if (cursor < text.length) {
+      segments.push(text.slice(cursor));
+    }
+
+    return segments;
+  }
+
 
   const tabs: { id: Tab; label: string; icon: typeof FileText }[] = [
     { id: 'summary', label: 'Summary', icon: FileText },
@@ -180,7 +393,18 @@ export function SummaryResult({
   const timeSaved = stats.originalReadTime - stats.summaryReadTime;
 
   return (
-    <div className="flex flex-col h-full gap-4">
+    <div className="flex flex-col h-full gap-4 relative">
+      {/* Creation Toolbar using SmartPopover */}
+      <SmartPopover
+        isOpen={!!anchorRect && !isTyping}
+        anchorRect={anchorRect}
+        margin={16}
+      >
+        <CommentToolbar
+          onSubmit={handleAddComment}
+          onDismiss={() => { setAnchorRect(null); setSelectionRange(null); }}
+        />
+      </SmartPopover>
 
       {/* ── Header ── */}
       <div className="flex items-center justify-between">
@@ -278,13 +502,27 @@ export function SummaryResult({
 
         {/* ── Summary Tab ── */}
         {activeTab === 'summary' && (
-          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-5 sm:p-6 mb-4">
+          <div
+            ref={summaryPanelRef}
+            className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-5 sm:p-6 mb-4 select-text cursor-text"
+            onMouseUp={handleMouseUp}
+          >
             <p className="text-[15px] text-slate-700 dark:text-slate-300 leading-[1.9] whitespace-pre-wrap tracking-[-0.01em]">
-              {displayedText}
+              {isTyping ? displayedText : renderAnnotatedText(displayedText)}
               {isTyping && (
                 <span className="inline-block w-0.5 h-5 bg-indigo-500 ml-0.5 animate-pulse align-middle rounded-full" />
               )}
             </p>
+
+            {/* Comment count indicator */}
+            {comments.length > 0 && !isTyping && (
+              <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+                <div className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+                <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                  {comments.length} {comments.length === 1 ? 'annotation' : 'annotations'}
+                </span>
+              </div>
+            )}
           </div>
         )}
 

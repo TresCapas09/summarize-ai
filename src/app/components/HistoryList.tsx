@@ -12,7 +12,7 @@ import {
   Sparkles,
   BookOpen,
 } from 'lucide-react';
-import type { SummaryRecord, SummarizationMethod } from '../types/summary';
+import type { SummaryRecord, SummarizationMethod, SummarizationMode } from '../types/summary';
 import { toast } from 'sonner';
 
 interface HistoryListProps {
@@ -36,6 +36,12 @@ const DOMAIN_ICONS: Record<string, string> = {
   technical: '⚙️',
   legal: '⚖️',
   medical: '🩺',
+};
+
+const MODE_LABELS: Record<SummarizationMode, string> = {
+  precise_summary: 'Precise Summary',
+  readable_summary: 'Readable Summary',
+  quick_digest: 'Quick Digest',
 };
 
 /** History tab — grid of saved summary cards with search, filter, expand */
@@ -152,6 +158,9 @@ export function HistoryList({
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-2 flex-wrap">
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 capitalize">
+                        {record.mode ? MODE_LABELS[record.mode] : 'Precise Summary'}
+                      </span>
                       <span
                         className={`text-xs px-2 py-0.5 rounded-full ${
                           METHOD_COLORS[record.method]

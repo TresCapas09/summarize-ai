@@ -15,6 +15,7 @@ export type SummaryDepth = number; // 0.1 (skim) to 0.9 (deep dive)
 
 /** Document domain for domain-aware summarization */
 export type DocumentDomain =
+  | 'auto'
   | 'general'
   | 'academic'
   | 'news'
@@ -33,6 +34,25 @@ export interface SummaryStats {
   processingTimeMs?: number;
 }
 
+/** A user comment anchored to a text range within a summary */
+export interface SummaryComment {
+  id: string;
+  /** The exact highlighted text the comment is anchored to */
+  snippetText: string;
+  /** Character offset where the highlight starts in the summary */
+  startIndex: number;
+  /** Character offset where the highlight ends in the summary */
+  endIndex: number;
+  /** The comment body */
+  comment: string;
+  /** Author info (snapshot at creation time) */
+  userId: string;
+  userName: string;
+  userAvatar: string;
+  userAvatarUrl?: string;
+  createdAt: string;
+}
+
 /** A persisted summary record saved to history */
 export interface SummaryRecord {
   id: string;
@@ -48,6 +68,7 @@ export interface SummaryRecord {
   length: SummaryLength;
   domain: DocumentDomain;
   stats: SummaryStats;
+  comments?: SummaryComment[];
   createdAt: string;
   isFavorited: boolean;
   contentHash?: string;

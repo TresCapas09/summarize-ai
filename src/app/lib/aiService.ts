@@ -10,6 +10,54 @@ import type {
   SummaryStats
 } from '../types/summary';
 
+/**
+ * Automatic Document Domain Detection
+ * Uses heuristic keyword matching for speed, fallbacks to "general".
+ */
+export function detectDocumentDomain(text: string): DocumentDomain {
+  const content = text.toLowerCase();
+
+  // HEURISTICS
+  const keywords = {
+    medical: ['patient', 'diagnosis', 'treatment', 'clinical', 'nursing', 'healthcare', 'hospital', 'physician', 'symptoms', 'therapy'],
+    legal: ['contract', 'plaintiff', 'defendant', 'regulation', 'statute', 'court', 'litigation', 'attorney', 'jurisdiction', 'agreement'],
+    technical: ['api', 'system architecture', 'implementation', 'algorithm', 'deployment', 'software', 'hardware', 'code', 'database', 'cloud'],
+    academic: ['abstract', 'methodology', 'literature review', 'references', 'research', 'hypothesis', 'citation', 'university', 'study', 'journal'],
+    news: ['breaking', 'reported', 'journalists', 'government announcement', 'correspondent', 'official said', 'incident', 'exclusive'],
+  };
+
+  const scores: Record<string, number> = {
+    medical: 0,
+    legal: 0,
+    technical: 0,
+    academic: 0,
+    news: 0,
+  };
+
+  // Count matches
+  Object.entries(keywords).forEach(([domain, words]) => {
+    words.forEach(word => {
+      const regex = new RegExp(`\\b${word}\\b`, 'gi');
+      const matches = content.match(regex);
+      if (matches) scores[domain] += (matches.length || 0);
+    });
+  });
+
+  // Find highest score
+  let bestDomain: DocumentDomain = 'general';
+  let maxScore = 0;
+
+  Object.entries(scores).forEach(([domain, score]) => {
+    if (score > maxScore) {
+      maxScore = score;
+      bestDomain = domain as DocumentDomain;
+    }
+  });
+
+  // Threshold for confidence (require at least 2 unique or repeated keywords)
+  return maxScore >= 2 ? bestDomain : 'general';
+}
+
 const GEMINI_KEY = (import.meta as any).env.VITE_GEMINI_API_KEY;
 const GROQ_KEY = (import.meta as any).env.VITE_GROQ_API_KEY;
 
@@ -25,10 +73,12 @@ const groq = GROQ_KEY
   : null;
 
 const MODELS = {
-  PRIMARY: 'gemini-3.1-flash-lite',
+  PRIMARY: 'gemini-3-flash-preview',
   FALLBACK_A: 'gemini-2.5-flash',
-  FALLBACK_B: 'openai/gpt-oss-120b',
-  FALLBACK_C: 'meta-llama/llama-4-scout-17b'
+  FALLBACK_B: 'gemini-2.5-flash-lite',
+  FALLBACK_C: 'gemini-3.1-flash-lite',
+  FALLBACK_D: 'openai/gpt-oss-20b',
+  FALLBACK_E: 'openai/gpt-oss-120b'
 };
 
 const SYSTEM_PROMPT = `
@@ -320,52 +370,43 @@ export async function summarizeWithAI(
 
 
   const runWaterfall = async () => {
-    /**
-     * PRIMARY: Gemini 3.1
-     */
-    try {
-      console.log(`[AI] Attempting Primary: ${MODELS.PRIMARY}`);
-      const data = await withTimeout(
-        retryOperation(
-          () => callGemini(prompt, MODELS.PRIMARY, images),
-          1
-        ),
-        15000, // Increase timeout for vision processing
-        'Primary Gemini'
-      );
-      return { data, engine: MODELS.PRIMARY };
-    } catch (err: any) {
-      console.warn(`[AI] Primary Failed: ${err.message}`);
+    // Define the sequence of models to try
+    const sequence = [
+      { id: MODELS.PRIMARY, type: 'gemini' },
+      { id: MODELS.FALLBACK_A, type: 'gemini' },
+      { id: MODELS.FALLBACK_B, type: 'gemini' },
+      { id: MODELS.FALLBACK_C, type: 'gemini' },
+      { id: MODELS.FALLBACK_D, type: 'groq' },
+      { id: MODELS.FALLBACK_E, type: 'groq' },
+    ];
 
-      /**
-       * FALLBACK A: Gemini Stable
-       */
+    for (const step of sequence) {
       try {
-        console.log(`[AI] Attempting Fallback A: ${MODELS.FALLBACK_A}`);
-        const data = await retryOperation(() => callGemini(prompt, MODELS.FALLBACK_A, images), 1);
-        return { data, engine: MODELS.FALLBACK_A };
-      } catch (err2: any) {
-        console.warn(`[AI] Fallback A Failed: ${err2.message}`);
-
-        /**
-         * FALLBACK B: Groq GPT-OSS
-         */
-        try {
-          console.log(`[AI] Attempting Fallback B: ${MODELS.FALLBACK_B}`);
-          const data = await retryOperation(() => callGroq(prompt, MODELS.FALLBACK_B), 1);
-          return { data, engine: MODELS.FALLBACK_B };
-        } catch (err3: any) {
-          console.warn(`[AI] Fallback B Failed: ${err3.message}`);
-
-          /**
-           * FALLBACK C: Groq Llama-Scout
-           */
-          console.log(`[AI] Attempting Fallback C: ${MODELS.FALLBACK_C}`);
-          const data = await retryOperation(() => callGroq(prompt, MODELS.FALLBACK_C), 1);
-          return { data, engine: MODELS.FALLBACK_C };
+        console.log(`[AI] Attempting ${step.type.toUpperCase()}: ${step.id}`);
+        
+        let data;
+        if (step.type === 'gemini') {
+          data = await withTimeout(
+            retryOperation(() => callGemini(prompt, step.id, images), 1),
+            15000,
+            `${step.type} call`
+          );
+        } else {
+          data = await withTimeout(
+            retryOperation(() => callGroq(prompt, step.id), 1),
+            12000,
+            `${step.type} call`
+          );
         }
+
+        if (data) return { data, engine: step.id };
+      } catch (err: any) {
+        console.warn(`[AI] ${step.id} Failed: ${err.message}`);
+        continue; // Try the next fallback
       }
     }
+
+    throw new Error('All AI models failed to generate a summary.');
   };
 
 

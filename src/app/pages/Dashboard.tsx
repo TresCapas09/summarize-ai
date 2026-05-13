@@ -12,7 +12,7 @@ import {
   summarizeWithMode,
   generateTitle,
 } from '../lib/summarizationEngine';
-import { summarizeWithAI } from '../lib/aiService';
+import { summarizeWithAI, detectDocumentDomain } from '../lib/aiService';
 import { generateHash } from '../lib/hashUtils';
 import type {
   SummarizationMethod,
@@ -23,6 +23,7 @@ import type {
   DocumentDomain,
   SummarizationResult,
   SummaryRecord,
+  SummaryComment,
 } from '../types/summary';
 import type { UserStats } from '../types/profile';
 import type { User } from '../types/auth';
@@ -56,6 +57,7 @@ function rowToRecord(row: Record<string, unknown>): SummaryRecord {
     createdAt: row.created_at as string,
     isFavorited: row.is_favorited as boolean,
     contentHash: row.content_hash as string | undefined,
+    comments: (row.comments as SummaryComment[]) ?? [],
   };
 }
 
@@ -65,6 +67,7 @@ export function Dashboard() {
   const navigate = useNavigate();
 
   const [activeView, setActiveView] = useState<DashView>('summarize');
+  const [domain, setDomain] = useState<DocumentDomain>('auto');
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingStage, setProcessingStage] = useState('');
   const [result, setResult] = useState<SummarizationResult | null>(null);
@@ -74,6 +77,7 @@ export function Dashboard() {
   const [history, setHistory] = useState<SummaryRecord[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [currentHash, setCurrentHash] = useState<string | null>(null);
+  const [comments, setComments] = useState<SummaryComment[]>([]);
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -131,19 +135,34 @@ export function Dashboard() {
     return stats;
   }, [history]);
 
+  /** GENERATE — orchestration logic */
   const handleSummarize = useCallback(
     async (
       text: string,
       mode: SummarizationMode,
       depth: SummaryDepth,
       format: OutputFormat,
-      domain: DocumentDomain,
+      selectedDomain: DocumentDomain,
       images?: string[]
     ) => {
+      if (!user) return;
       setIsProcessing(true);
       setResult(null);
       setIsSaved(false);
       setCurrentMode(mode);
+
+      let finalDomain = selectedDomain;
+
+      // Auto Detect logic
+      if (selectedDomain === 'auto') {
+        const detected = detectDocumentDomain(text);
+        finalDomain = detected;
+        setDomain(detected);
+        toast.info(`Document type detected: ${detected.charAt(0).toUpperCase() + detected.slice(1)}`, {
+          icon: '✨',
+          duration: 3000
+        });
+      }
 
       // 1. Generate Content Hash
       const hash = await generateHash(text);
@@ -158,7 +177,7 @@ export function Dashboard() {
         .eq('mode', mode)
         .eq('depth', depth)
         .eq('format', format)
-        .eq('domain', domain)
+        .eq('domain', finalDomain)
         .maybeSingle();
 
       if (existing) {
@@ -185,10 +204,10 @@ export function Dashboard() {
 
       try {
         const hasAIKey = !!(import.meta as any).env.VITE_GEMINI_API_KEY;
-        const res = hasAIKey 
-          ? await summarizeWithAI(text, mode, depth, format, domain, images)
-          : summarizeWithMode(text, mode, depth, format, domain);
-          
+        const res = hasAIKey
+          ? await summarizeWithAI(text, mode, depth, format, finalDomain, images)
+          : summarizeWithMode(text, mode, depth, format, finalDomain);
+
         setResult(res);
 
         const method: SummarizationMethod =
@@ -208,12 +227,13 @@ export function Dashboard() {
           format,
           depth,
           length,
-          domain,
+          domain: finalDomain,
           stats: res.stats,
           createdAt: new Date().toISOString(),
           isFavorited: false,
         };
         setCurrentRecord(record);
+        setComments([]);  // Reset comments for new summary
 
         toast.success('Summary generated successfully!', {
           description: `${res.stats.compressionRatio}% compression · ${res.stats.summaryWordCount} words`,
@@ -249,6 +269,7 @@ export function Dashboard() {
         length: currentRecord.length,
         domain: currentRecord.domain,
         stats: currentRecord.stats,
+        comments: comments,
         is_favorited: false,
         content_hash: currentHash,
       })
@@ -316,6 +337,7 @@ export function Dashboard() {
     setResult(synthetic);
     setCurrentMode(record.mode || 'precise_summary');
     setCurrentRecord(record);
+    setComments(record.comments || []);
     setIsSaved(true);
   }
 
@@ -355,6 +377,8 @@ export function Dashboard() {
               <SummaryInput
                 onSummarize={handleSummarize}
                 isProcessing={isProcessing}
+                domain={domain}
+                onDomainChange={setDomain}
               />
             </div>
 
@@ -367,6 +391,9 @@ export function Dashboard() {
                 processingStage={processingStage}
                 onSave={handleSave}
                 isSaved={isSaved}
+                comments={comments}
+                onCommentsChange={setComments}
+                currentUser={user ? { id: user.id, displayName: user.displayName, avatar: user.avatar, avatarUrl: user.avatarUrl } : undefined}
               />
             </div>
           </div>
@@ -383,10 +410,9 @@ export function Dashboard() {
                 {historyLoading
                   ? 'Loading your summaries…'
                   : history.length > 0
-                  ? `${history.length} saved ${
-                      history.length === 1 ? 'summary' : 'summaries'
+                    ? `${history.length} saved ${history.length === 1 ? 'summary' : 'summaries'
                     } — synced to your account`
-                  : 'Your saved summaries will appear here'}
+                    : 'Your saved summaries will appear here'}
               </p>
             </div>
             {historyLoading ? (
