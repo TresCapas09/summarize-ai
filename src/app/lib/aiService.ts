@@ -10,8 +10,8 @@ import type {
   SummaryStats
 } from '../types/summary';
 
-const GEMINI_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-const GROQ_KEY = import.meta.env.VITE_GROQ_API_KEY;
+const GEMINI_KEY = (import.meta as any).env.VITE_GEMINI_API_KEY;
+const GROQ_KEY = (import.meta as any).env.VITE_GROQ_API_KEY;
 
 const genAI = GEMINI_KEY
   ? new GoogleGenerativeAI(GEMINI_KEY)
@@ -407,7 +407,7 @@ export async function summarizeWithAI(
     summaryReadTime:
       Math.ceil(summaryWords / 200),
 
-    sentencesExtracted: mode === 'extractive' ? Math.ceil(summaryWords / 15) : 0,
+    sentencesExtracted: (mode === 'precise_summary' || mode === 'quick_digest') ? Math.ceil(summaryWords / 15) : 0,
 
     processingTimeMs:
       Math.round(endTime - startTime)
