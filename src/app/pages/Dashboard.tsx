@@ -68,7 +68,7 @@ export function Dashboard() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingStage, setProcessingStage] = useState('');
   const [result, setResult] = useState<SummarizationResult | null>(null);
-  const [currentMode, setCurrentMode] = useState<SummarizationMode>('fact_checker');
+  const [currentMode, setCurrentMode] = useState<SummarizationMode>('precise_summary');
   const [isSaved, setIsSaved] = useState(false);
   const [currentRecord, setCurrentRecord] = useState<SummaryRecord | null>(null);
   const [history, setHistory] = useState<SummaryRecord[]>([]);
@@ -184,22 +184,15 @@ export function Dashboard() {
       clearInterval(stageInterval);
 
       try {
-        const hasAIKey = !!import.meta.env.VITE_GEMINI_API_KEY;
+        const hasAIKey = !!(import.meta as any).env.VITE_GEMINI_API_KEY;
         const res = hasAIKey 
           ? await summarizeWithAI(text, mode, depth, format, domain, images)
           : summarizeWithMode(text, mode, depth, format, domain);
           
-        if (res.engineUsed && res.engineUsed !== 'gemini-3.1-flash-lite') {
-          toast.info(`Primary AI busy. Fallback used: ${res.engineUsed}`, {
-            icon: '⚡',
-            duration: 4000
-          });
-        }
-
         setResult(res);
 
         const method: SummarizationMethod =
-          mode === 'storyteller' ? 'abstractive' : 'extractive';
+          mode === 'readable_summary' ? 'abstractive' : 'extractive';
         const length: SummaryLength =
           depth <= 0.3 ? 'brief' : depth >= 0.7 ? 'detailed' : 'medium';
 
@@ -321,7 +314,7 @@ export function Dashboard() {
       stats: record.stats,
     };
     setResult(synthetic);
-    setCurrentMode(record.mode || 'fact_checker');
+    setCurrentMode(record.mode || 'precise_summary');
     setCurrentRecord(record);
     setIsSaved(true);
   }

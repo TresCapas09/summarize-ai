@@ -31,9 +31,9 @@ interface SummaryResultProps {
 type Tab = 'summary' | 'keypoints' | 'stats';
 
 const MODE_LABELS: Record<SummarizationMode, string> = {
-  fact_checker: 'Exact Extraction',
-  storyteller: 'Creative Rewriting',
-  speed_reader: 'Speed Reader',
+  precise_summary: 'Precise Summary',
+  readable_summary: 'Readable Summary',
+  quick_digest: 'Quick Digest',
 };
 
 /** Right-panel: animated summary output with tabs for key points and stats */

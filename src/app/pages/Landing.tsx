@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import {
   Sparkles,
@@ -11,9 +11,13 @@ import {
   Clock,
   Lightbulb,
   ScanSearch,
+  LogOut,
+  X,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { ThemeToggle } from '../components/ThemeToggle';
+import { Avatar } from '../components/Avatar';
+import { toast } from 'sonner';
 
 const FEATURES = [
   {
@@ -66,6 +70,7 @@ const FEATURES = [
   },
 ];
 
+
 const STEPS = [
   {
     num: '01',
@@ -87,12 +92,19 @@ const STEPS = [
 
 /** Public landing page with hero, features, and CTAs */
 export function Landing() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
-  useEffect(() => {
-    if (user) navigate('/dashboard', { replace: true });
-  }, [user, navigate]);
+  async function handleLogout() {
+    try {
+      await logout();
+      setShowLogoutConfirm(false);
+      toast.success('Signed out successfully');
+    } catch (err) {
+      toast.error('Failed to sign out');
+    }
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-[Inter,sans-serif]">
@@ -109,18 +121,81 @@ export function Landing() {
           </div>
           <div className="flex items-center gap-2">
             <ThemeToggle />
-            <button
-              onClick={() => navigate('/auth')}
-              className="px-3 py-1.5 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-colors duration-200"
-            >
-              Sign in
-            </button>
-            <button
-              onClick={() => navigate('/auth?mode=signup')}
-              className="px-3 py-1.5 text-sm bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-all duration-200 shadow-sm"
-            >
-              Get started
-            </button>
+            {user ? (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => navigate('/dashboard')}
+                  className="flex items-center gap-2.5 p-1 pr-1.5 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all duration-300 group border border-slate-200 dark:border-slate-700 cursor-pointer"
+                >
+                  <Avatar
+                    avatarId={user.avatar}
+                    avatarUrl={user.avatarUrl}
+                    size="sm"
+                  />
+                  <div className="flex flex-col items-start leading-tight">
+                    <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest animate-pulse">
+                      Your Dashboard
+                    </span>
+                    <span className="text-sm font-medium text-slate-700 dark:text-slate-200 max-w-[100px] truncate">
+                      {user.displayName || user.username}
+                    </span>
+                  </div>
+                  
+                  {/* Logout Button nested inside/adjacent */}
+                  <div className="relative ml-1">
+                    <div
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowLogoutConfirm(v => !v);
+                      }}
+                      className={`p-1.5 rounded-full transition-all duration-200 ${
+                        showLogoutConfirm 
+                          ? 'bg-red-500 text-white' 
+                          : 'text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30'
+                      }`}
+                      title="Sign out"
+                    >
+                      <LogOut className="w-3.5 h-3.5" />
+                    </div>
+
+                    {showLogoutConfirm && (
+                      <div className="absolute right-0 top-[calc(100%+12px)] z-50 w-40 p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl animate-in fade-in zoom-in duration-200">
+                        <p className="text-[10px] font-bold text-slate-900 dark:text-white mb-2.5 text-center uppercase tracking-wider">Log out?</p>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleLogout(); }}
+                            className="flex-1 py-1 rounded-lg bg-red-600 hover:bg-red-700 text-white text-[10px] font-bold uppercase transition-colors"
+                          >
+                            Yes
+                          </button>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setShowLogoutConfirm(false); }}
+                            className="flex-1 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 text-indigo-600 dark:text-indigo-400 text-[10px] font-bold uppercase transition-colors"
+                          >
+                            No
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </button>
+              </div>
+            ) : (
+              <>
+                <button
+                  onClick={() => navigate('/auth')}
+                  className="px-3 py-1.5 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-colors duration-200"
+                >
+                  Sign in
+                </button>
+                <button
+                  onClick={() => navigate('/auth?mode=signup')}
+                  className="px-3 py-1.5 text-sm bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-all duration-200 shadow-sm"
+                >
+                  Get started
+                </button>
+              </>
+            )}
           </div>
         </div>
       </header>
@@ -151,18 +226,20 @@ export function Landing() {
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <button
-              onClick={() => navigate('/auth?mode=signup')}
+              onClick={() => navigate(user ? '/dashboard' : '/auth?mode=signup')}
               className="group flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-lg shadow-indigo-600/20 transition-all duration-200"
             >
-              Start summarizing for free
+              {user ? 'Back to your dashboard' : 'Start summarizing for free'}
               <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform duration-200" />
             </button>
-            <button
-              onClick={() => navigate('/auth')}
-              className="px-6 py-3 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-800 rounded-xl transition-all duration-200"
-            >
-              Sign in
-            </button>
+            {!user && (
+              <button
+                onClick={() => navigate('/auth')}
+                className="px-6 py-3 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-800 rounded-xl transition-all duration-200"
+              >
+                Sign in
+              </button>
+            )}
           </div>
 
           {/* Checklist */}

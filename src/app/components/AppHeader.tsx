@@ -28,7 +28,7 @@ export function AppHeader({
   const [menuOpen, setMenuOpen] = useState(false);
 
   function handleLogoClick() {
-    onViewChange('summarize');
+    navigate('/');
   }
 
   async function handleLogout() {
