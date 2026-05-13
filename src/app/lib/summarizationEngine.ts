@@ -115,11 +115,11 @@ function depthToLength(depth: SummaryDepth): SummaryLength {
 /** Map user mode to technical method */
 function modeToMethod(mode: SummarizationMode): SummarizationMethod {
   switch (mode) {
-    case 'fact_checker':
+    case 'precise_summary':
       return 'extractive';
-    case 'storyteller':
+    case 'readable_summary':
       return 'abstractive';
-    case 'speed_reader':
+    case 'quick_digest':
       return 'extractive'; // Uses extractive but with minimal sentences
   }
 }
@@ -257,13 +257,13 @@ function formatSummary(
       .join('\n\n');
   }
 
-  if (format === 'story_arc') {
+  if (format === 'structured') {
     // Create a structured format based on document type
     const chunks = summary.match(/[^.!?]+[.!?]+/g) || [summary];
     if (chunks.length <= 2) return summary;
 
     // Context-aware headers based on document domain
-    const headers = getStoryArcHeaders(domain);
+    const headers = getStructuredHeaders(domain);
 
     // For general domain, return clean paragraphs without headers
     if (headers.opening === '') {
@@ -285,8 +285,8 @@ function formatSummary(
   return summary;
 }
 
-/** Get context-aware headers for Story Arc format based on document type */
-function getStoryArcHeaders(domain: DocumentDomain): {
+/** Get context-aware headers for Structured format based on document type */
+function getStructuredHeaders(domain: DocumentDomain): {
   opening: string;
   middle: string;
   closing: string;
@@ -406,8 +406,8 @@ export function summarizeWithMode(
   const length = depthToLength(depth);
   const method = modeToMethod(mode);
 
-  // For speed reader mode, always use brief
-  const effectiveLength = mode === 'speed_reader' ? 'brief' : length;
+  // For quick digest mode, always use brief
+  const effectiveLength = mode === 'quick_digest' ? 'brief' : length;
 
   const { summary: rawSummary, highlightedSentences } =
     method === 'extractive'
@@ -417,9 +417,9 @@ export function summarizeWithMode(
   // Apply formatting with context-aware headers
   const summary = formatSummary(rawSummary, format, domain, sentences);
 
-  // For speed reader, extract only top 2-3 key points
+  // For quick digest, extract only top 2-3 key points
   const keyPoints =
-    mode === 'speed_reader'
+    mode === 'quick_digest'
       ? extractKeyPoints(sentences, wordFreq).slice(0, 3)
       : extractKeyPoints(sentences, wordFreq);
 

@@ -4,13 +4,13 @@ import {
   Sparkles,
   FileText,
   Zap,
-  BookOpen,
-  BarChart2,
   ArrowRight,
   Check,
   Brain,
   Layers,
   Clock,
+  Lightbulb,
+  ScanSearch,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { ThemeToggle } from '../components/ThemeToggle';
@@ -18,50 +18,50 @@ import { ThemeToggle } from '../components/ThemeToggle';
 const FEATURES = [
   {
     icon: Brain,
-    title: 'Extractive Summarization',
+    title: 'Precise Summaries',
     description:
-      'Identifies and preserves the most statistically significant sentences from the original text using TF-IDF scoring and positional analysis.',
-    tag: 'NLP-powered',
+      'Keeps the most important information from your original document with high accuracy.',
+    tag: 'High Accuracy',
     color: 'indigo',
   },
   {
     icon: Sparkles,
-    title: 'Abstractive Summarization',
+    title: 'Readable Summaries',
     description:
-      'Restructures and rephrases key ideas into a cohesive narrative — producing domain-aware summaries that read naturally.',
-    tag: 'AI-driven',
+      'Transforms long or complex documents into clear, natural summaries that are easier to read.',
+    tag: 'AI-Powered',
     color: 'violet',
   },
   {
     icon: Layers,
-    title: 'Key Points Extraction',
+    title: 'Key Insights',
     description:
-      'Automatically identifies the five most informative sentences and presents them as digestible bullet points.',
+      'Automatically identifies and extracts the most important ideas and presents them as easy-to-read bullet points.',
     tag: 'Instant',
     color: 'sky',
   },
   {
-    icon: BarChart2,
-    title: 'Compression Analytics',
+    icon: Lightbulb,
+    title: 'Reading Time Saved',
     description:
-      'Get precise metrics on word reduction, reading time saved, compression ratio, and sentence coverage at a glance.',
+      'Track compression, reading time saved, and summary statistics at a glance.',
     tag: 'Metrics',
     color: 'emerald',
   },
   {
-    icon: BookOpen,
-    title: 'Domain Awareness',
+    icon: ScanSearch,
+    title: 'Smart Context',
     description:
-      'Tailored to six domains — General, Academic, News, Technical, Legal, and Medical — for contextually accurate summaries.',
-    tag: '6 domains',
+      'Adapts summaries based on your document type for more relevant and accurate results.',
+    tag: 'Context-Aware',
     color: 'amber',
   },
   {
     icon: Clock,
     title: 'Summary History',
     description:
-      'Every summary is saved to your personal history. Search, filter, favourite, and revisit any past result instantly.',
-    tag: 'Persistent',
+      'Save, revisit, and organize your summaries whenever you need them.',
+    tag: 'Saved',
     color: 'rose',
   },
 ];
@@ -69,27 +69,21 @@ const FEATURES = [
 const STEPS = [
   {
     num: '01',
-    title: 'Paste your text',
-    desc: 'Drop in any long-form content — research papers, news articles, reports, or technical docs.',
+    title: 'Upload or paste your document',
+    desc: 'Add a PDF, research paper, report, article, or any long-form content.',
   },
   {
     num: '02',
-    title: 'Choose your method',
-    desc: 'Select Extractive or Abstractive summarization, desired length, and document domain.',
+    title: 'Customize your summary',
+    desc: 'Choose summary length, style (bullet or paragraph), and tone to match your needs.',
   },
   {
     num: '03',
-    title: 'Read your summary',
-    desc: 'Get an instant, AI-quality summary with key points, compression stats, and export options.',
+    title: 'Get your results',
+    desc: 'Receive a clear summary with key insights, reading stats, and export options.',
   },
 ];
 
-const STATS = [
-  { value: '10×', label: 'Faster reading' },
-  { value: '80%', label: 'Average compression' },
-  { value: '6', label: 'Domain modes' },
-  { value: '2', label: 'NLP algorithms' },
-];
 
 /** Public landing page with hero, features, and CTAs */
 export function Landing() {
@@ -140,7 +134,7 @@ export function Landing() {
         <div className="relative max-w-4xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 text-xs mb-8">
             <Sparkles className="w-3 h-3" />
-            <span>AI-powered NLP summarization engine</span>
+            <span>Built for students, researchers, and professionals.</span>
           </div>
 
           <h1 className="text-4xl sm:text-5xl lg:text-6xl text-slate-900 dark:text-white mb-6 leading-tight">
@@ -151,9 +145,8 @@ export function Landing() {
           </h1>
 
           <p className="text-lg text-slate-500 dark:text-slate-400 max-w-2xl mx-auto mb-10 leading-relaxed">
-            Transform long documents, research papers, and news articles into
-            crisp, accurate summaries using state-of-the-art extractive and
-            abstractive NLP techniques.
+            Turn PDFs, research papers, reports, and articles into clean, 
+            accurate AI-powered summaries in seconds.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -174,7 +167,7 @@ export function Landing() {
 
           {/* Checklist */}
           <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 mt-8">
-            {['No API key needed', 'Two NLP algorithms', 'Dark mode included'].map(
+            {['PDF & Document Support', 'Smart AI Key Insights', 'Flexible Summary Styles'].map(
               item => (
                 <div
                   key={item}
@@ -269,32 +262,16 @@ export function Landing() {
         </div>
       </section>
 
-      {/* ── Stats ── */}
-      <section className="py-12 border-y border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 grid grid-cols-2 sm:grid-cols-4 gap-8 text-center">
-          {STATS.map(s => (
-            <div key={s.label}>
-              <div className="text-3xl text-indigo-600 dark:text-indigo-400 mb-1">
-                {s.value}
-              </div>
-              <div className="text-sm text-slate-500 dark:text-slate-400">
-                {s.label}
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
 
       {/* ── Features ── */}
       <section className="py-20 px-4 sm:px-6">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-14">
             <h2 className="text-3xl text-slate-900 dark:text-white mb-3">
-              Everything you need to process text
+              Everything you need to summarize <span className="text-indigo-600 dark:text-indigo-400 font-bold">SMARTER</span> 
             </h2>
             <p className="text-slate-500 dark:text-slate-400 max-w-xl mx-auto">
-              A complete NLP toolkit — from raw document to structured insight
-              in seconds.
+              Turn PDFs, reports, and research papers into clear insights in seconds.
             </p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -328,10 +305,10 @@ export function Landing() {
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-14">
             <h2 className="text-3xl text-slate-900 dark:text-white mb-3">
-              How it works
+              How it works?
             </h2>
             <p className="text-slate-500 dark:text-slate-400">
-              Three steps from long document to clean summary.
+              From document to summary in three simple steps:
             </p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
@@ -365,8 +342,7 @@ export function Landing() {
             Ready to save hours of reading?
           </h2>
           <p className="text-slate-500 dark:text-slate-400 mb-8">
-            Join thousands of researchers, students, and professionals who
-            summarize smarter with AI.
+            Built for students, researchers, and professionals working with long documents.
           </p>
           <button
             onClick={() => navigate('/auth?mode=signup')}
@@ -390,8 +366,7 @@ export function Landing() {
             </span>
           </div>
           <p className="text-xs text-slate-400 dark:text-slate-500">
-            Built with React, TypeScript, and NLP algorithms. Frontend only —
-            no data leaves your browser.
+            AI-powered document summarization for students, researchers, and professionals.
           </p>
         </div>
       </footer>

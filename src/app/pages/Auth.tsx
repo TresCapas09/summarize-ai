@@ -278,10 +278,6 @@ export function Auth() {
               )}
             </div>
           </form>
-
-          <p className="text-center text-xs text-slate-400 dark:text-slate-500 mt-6">
-            Your data is stored securely in the cloud and synced across devices.
-          </p>
         </div>
       </div>
     </div>

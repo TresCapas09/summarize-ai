@@ -45,3 +45,19 @@ body {
   }
 }
 
+/* ── Custom Sonner Close Button ── */
+[data-sonner-toast] [data-close-button] {
+  right: -12px !important;
+  left: auto !important;
+  background: #ef4444 !important; /* Red-500 */
+  color: white !important;
+  border: 1px solid #dc2626 !important;
+  opacity: 1 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+[data-sonner-toast] [data-close-button]:hover {
+  background: #dc2626 !important;
+}

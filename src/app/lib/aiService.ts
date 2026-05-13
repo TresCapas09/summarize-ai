@@ -19,9 +19,9 @@ const genAI = GEMINI_KEY
 
 const groq = GROQ_KEY
   ? new Groq({
-      apiKey: GROQ_KEY,
-      dangerouslyAllowBrowser: true
-    })
+    apiKey: GROQ_KEY,
+    dangerouslyAllowBrowser: true
+  })
   : null;
 
 const MODELS = {
@@ -96,7 +96,7 @@ function constructPrompt(
   domain: DocumentDomain
 ): string {
   const wordCount = text.trim().split(/\s+/).length;
-  
+
   // 1. QUANTITATIVE DEPTH REQUIREMENTS
   let depthText = '';
   let bulletCount = '';
@@ -104,7 +104,7 @@ function constructPrompt(
 
   if (depth <= 0.3) {
     const targetWords = Math.max(50, Math.round(wordCount * 0.15));
-    depthText = `ULTRA-CONCISE SKIM. Target: ~${targetWords} words. Focus ONLY on the absolute core thesis.`;
+    depthText = `ULTRA-CONCISE BRIEF. Target: ~${targetWords} words. Focus ONLY on the absolute core thesis.`;
     bulletCount = '2-3 high-impact bullets';
     sentenceLimit = 'MAXIMUM 3 sentences total.';
   } else if (depth >= 0.7) {
@@ -122,14 +122,14 @@ function constructPrompt(
   // 2. MODE REQUIREMENTS
   let modeText = '';
   switch (mode) {
-    case 'fact_checker':
-      modeText = `STRICT FACTUAL EXTRACTION. Identify only verifiable data, names, and claims. Neutral tone. ${sentenceLimit}`;
+    case 'precise_summary':
+      modeText = `PRECISE & FAITHFUL SUMMARY. Generate a precise and faithful summary that preserves the most important information from the original document. Prioritize factual accuracy, clarity, and minimal distortion of meaning. ${sentenceLimit}`;
       break;
-    case 'storyteller':
-      modeText = 'ENGAGING NARRATIVE REWRITE. Transform the content into a readable story flow. Use evocative language while preserving truth.';
+    case 'readable_summary':
+      modeText = 'NATURAL & READABLE SUMMARY. Generate a clear, natural, and easy-to-read summary that simplifies complex ideas while preserving the original meaning. Improve readability without adding fictional or exaggerated details.';
       break;
-    case 'speed_reader':
-      modeText = 'AGGRESSIVE COMPRESSION. Strip all filler. Use punchy, telegraphic style. Focus on action and impact.';
+    case 'quick_digest':
+      modeText = `HIGHLY CONDENSED QUICK DIGEST. Generate a highly condensed summary focused only on the most critical takeaways. Prioritize brevity, clarity, and fast readability. ${sentenceLimit}`;
       break;
     default:
       modeText = 'General summarization.';
@@ -139,8 +139,8 @@ function constructPrompt(
   let formatText = '';
   if (format === 'bullets') {
     formatText = `LIST FORMAT. Every line MUST begin with the "-" character. NO paragraphs. Target: ${bulletCount}.`;
-  } else if (format === 'story_arc') {
-    formatText = 'STORY ARC FORMAT. Structure clearly as: [Beginning], [Middle], and [End].';
+  } else if (format === 'structured') {
+    formatText = 'STRUCTURED FORMAT. Organize the content into clear, logical sections with descriptive bold headers. Group ideas by theme or category for maximum clarity. Use a professional, organized tone.';
   } else {
     formatText = `PARAGRAPH FORMAT. Cohesive paragraphs. ${sentenceLimit}`;
   }
@@ -323,28 +323,28 @@ export async function summarizeWithAI(
     /**
      * PRIMARY: Gemini 3.1
      */
-      try {
-        console.log(`[AI] Attempting Primary: ${MODELS.PRIMARY}`);
-        const data = await withTimeout(
-          retryOperation(
-            () => callGemini(prompt, MODELS.PRIMARY, images),
-            1
-          ),
-          15000, // Increase timeout for vision processing
-          'Primary Gemini'
-        );
-        return { data, engine: MODELS.PRIMARY };
-      } catch (err: any) {
-        console.warn(`[AI] Primary Failed: ${err.message}`);
+    try {
+      console.log(`[AI] Attempting Primary: ${MODELS.PRIMARY}`);
+      const data = await withTimeout(
+        retryOperation(
+          () => callGemini(prompt, MODELS.PRIMARY, images),
+          1
+        ),
+        15000, // Increase timeout for vision processing
+        'Primary Gemini'
+      );
+      return { data, engine: MODELS.PRIMARY };
+    } catch (err: any) {
+      console.warn(`[AI] Primary Failed: ${err.message}`);
 
-        /**
-         * FALLBACK A: Gemini Stable
-         */
-        try {
-          console.log(`[AI] Attempting Fallback A: ${MODELS.FALLBACK_A}`);
-          const data = await retryOperation(() => callGemini(prompt, MODELS.FALLBACK_A, images), 1);
-          return { data, engine: MODELS.FALLBACK_A };
-        } catch (err2: any) {
+      /**
+       * FALLBACK A: Gemini Stable
+       */
+      try {
+        console.log(`[AI] Attempting Fallback A: ${MODELS.FALLBACK_A}`);
+        const data = await retryOperation(() => callGemini(prompt, MODELS.FALLBACK_A, images), 1);
+        return { data, engine: MODELS.FALLBACK_A };
+      } catch (err2: any) {
         console.warn(`[AI] Fallback A Failed: ${err2.message}`);
 
         /**

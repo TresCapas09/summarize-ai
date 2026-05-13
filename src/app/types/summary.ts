@@ -2,10 +2,10 @@
 export type SummarizationMethod = 'extractive' | 'abstractive';
 
 /** User-friendly summarization modes */
-export type SummarizationMode = 'fact_checker' | 'storyteller' | 'speed_reader';
+export type SummarizationMode = 'precise_summary' | 'readable_summary' | 'quick_digest';
 
 /** Output format preference */
-export type OutputFormat = 'paragraph' | 'bullets' | 'story_arc';
+export type OutputFormat = 'paragraph' | 'bullets' | 'structured';
 
 /** Desired output length */
 export type SummaryLength = 'brief' | 'medium' | 'detailed';
