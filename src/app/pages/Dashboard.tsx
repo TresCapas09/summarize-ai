@@ -109,6 +109,29 @@ export function Dashboard() {
     loadHistory();
   }, [user]);
 
+  /** Sync comments to Supabase if the record is already saved */
+  const handleCommentsChange = useCallback(async (newComments: SummaryComment[]) => {
+    setComments(newComments);
+
+    if (currentRecord && isSaved && user) {
+      // Update local history immediately for UI responsiveness
+      setHistory(prev => prev.map(r => 
+        r.id === currentRecord.id ? { ...r, comments: newComments } : r
+      ));
+
+      // Persist to Supabase
+      const { error } = await supabase
+        .from('summaries')
+        .update({ comments: newComments })
+        .eq('id', currentRecord.id);
+
+      if (error) {
+        console.error('Failed to sync comments:', error.message);
+        toast.error('Sync failed', { description: 'Could not save comments to history.' });
+      }
+    }
+  }, [currentRecord, isSaved, user]);
+
   /** Calculate user statistics based on history */
   const userStats = useMemo<UserStats>(() => {
     const stats: UserStats = {
@@ -392,7 +415,7 @@ export function Dashboard() {
                 onSave={handleSave}
                 isSaved={isSaved}
                 comments={comments}
-                onCommentsChange={setComments}
+                onCommentsChange={handleCommentsChange}
                 currentUser={user ? { id: user.id, displayName: user.displayName, avatar: user.avatar, avatarUrl: user.avatarUrl } : undefined}
               />
             </div>
