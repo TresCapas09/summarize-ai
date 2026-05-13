@@ -1,6 +1,6 @@
 # SummarizeAI
 
-**SummarizeAI** is a high-performance, AI-powered NLP summarization engine designed to transform long-form content—such as research papers, legal documents, and news articles—into crisp, actionable insights. Built with a focus on privacy and efficiency, it processes text locally to ensure no data leaves your browser.
+**SummarizeAI** is a high-performance, AI-powered NLP summarization engine designed to transform long-form content, such as research papers, legal documents, and news articles—into crisp, actionable insights. Built with a focus on privacy and efficiency, it processes text locally to ensure no data leaves your browser.
 
 ## ✨ Key Features
 
@@ -19,13 +19,11 @@
 * **State Management:** React Context API (Auth and Theme)
 * **UI Components:** Sonner (Notifications), Lucide React (Icons)
 
-## 📁 Project Structure
+## Developers
+* Rose Mae Caiban
+* Mercy Dacup
+* Mohammad Khalil Dubouzet
+* Raniel Miro
+* Christian Anton Nobleza
+* James Thelo S. Quilang
 
-```text
-src/
-├── app/             # Application entry point and providers
-├── contexts/        # Auth and Theme context logic
-├── pages/           # Landing, Auth, Dashboard, and Reset Password
-├── types/           # TypeScript interfaces for Summaries and Profiles
-├── routes.tsx       # Browser router configuration
-└── styles/          # Global CSS, Tailwind, and Font imports
