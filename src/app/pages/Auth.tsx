@@ -74,7 +74,6 @@ export function Auth() {
         const displayName = loggedInUser?.user_metadata?.display_name || email.split('@')[0];
         toast.success(`Welcome back, ${displayName}! 👋`);
       }
-      navigate('/dashboard');
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Something went wrong.';
       toast.error(msg);

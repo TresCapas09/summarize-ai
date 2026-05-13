@@ -90,9 +90,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       async (event, session) => {
         if (!mounted) return;
         
-        // Only show global loader for major events like Sign In or Initial Load
-        // Avoid flicker for USER_UPDATED (profile changes)
-        if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
+        // Only show global loader for INITIAL_SESSION to prevent flicker on login/signup
+        if (event === 'INITIAL_SESSION') {
           setIsLoading(true);
         }
 

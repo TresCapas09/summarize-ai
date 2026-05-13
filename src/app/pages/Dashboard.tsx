@@ -355,33 +355,32 @@ export function Dashboard() {
         </div>
 
         {/* ── Summarize view ── */}
-        {activeView === 'summarize' && (
+        <div style={{ display: activeView === 'summarize' ? 'block' : 'none' }}>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 min-h-[calc(100vh-8rem)]">
-              {/* Input panel */}
-              <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sm:p-5 shadow-sm flex flex-col min-h-[500px] sm:min-h-[600px] lg:min-h-[calc(100vh-12rem)]">
-                <SummaryInput
-                  onSummarize={handleSummarize}
-                  isProcessing={isProcessing}
-                />
-              </div>
-
-              {/* Result panel */}
-              <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sm:p-5 shadow-sm flex flex-col min-h-[400px] sm:min-h-[500px] lg:min-h-[calc(100vh-12rem)]">
-                <SummaryResult
-                  result={result}
-                  mode={currentMode}
-                  isProcessing={isProcessing}
-                  processingStage={processingStage}
-                  onSave={handleSave}
-                  isSaved={isSaved}
-                />
-              </div>
-
+            {/* Input panel */}
+            <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sm:p-5 shadow-sm flex flex-col min-h-[500px] sm:min-h-[600px] lg:min-h-[calc(100vh-12rem)]">
+              <SummaryInput
+                onSummarize={handleSummarize}
+                isProcessing={isProcessing}
+              />
             </div>
-        )}
+
+            {/* Result panel */}
+            <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sm:p-5 shadow-sm flex flex-col min-h-[400px] sm:min-h-[500px] lg:min-h-[calc(100vh-12rem)]">
+              <SummaryResult
+                result={result}
+                mode={currentMode}
+                isProcessing={isProcessing}
+                processingStage={processingStage}
+                onSave={handleSave}
+                isSaved={isSaved}
+              />
+            </div>
+          </div>
+        </div>
 
         {/* ── History view ── */}
-        {activeView === 'history' && (
+        <div style={{ display: activeView === 'history' ? 'block' : 'none' }}>
           <div className="max-w-4xl mx-auto">
             <div className="mb-6">
               <h2 className="text-slate-900 dark:text-white mb-1">
@@ -410,7 +409,7 @@ export function Dashboard() {
               />
             )}
           </div>
-        )}
+        </div>
       </main>
     </div>
   );

@@ -234,7 +234,7 @@ export function SummaryInput({ onSummarize, isProcessing }: SummaryInputProps) {
           )}
 
           {isParsingPDF && (
-            <div className="absolute inset-0 bg-white/60 dark:bg-slate-950/60 backdrop-blur-[2px] rounded-xl flex flex-col items-center justify-center gap-3 z-10 animate-in fade-in duration-300 text-center">
+            <div className="absolute inset-0 bg-white/40 dark:bg-slate-950/40 backdrop-blur-[1px] rounded-xl flex flex-col items-center justify-center gap-3 z-10 animate-in fade-in duration-300 text-center">
               <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
               <p className="text-sm font-bold text-slate-600 dark:text-slate-300 animate-pulse uppercase tracking-widest px-4">Parsing Documents…</p>
             </div>

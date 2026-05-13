@@ -57,6 +57,9 @@ export async function extractTextFromPDF(
 
   // Step 3: Loop through each page and extract text or image
   for (let pageNum = 1; pageNum <= pageCount; pageNum++) {
+    // Yield to main thread to keep UI responsive on low-end laptops during heavy PDF parsing
+    await new Promise(resolve => setTimeout(resolve, 0));
+
     const page = await pdf.getPage(pageNum);
     const textContent = await page.getTextContent();
 
