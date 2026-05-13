@@ -18,6 +18,10 @@
 * **Styling:** Tailwind CSS with custom dark mode support
 * **State Management:** React Context API (Auth and Theme)
 * **UI Components:** Sonner (Notifications), Lucide React (Icons)
+* **Backend/Database:** Supabase
+* **AI Integration:** Natural Language Processing (NLP), Large Language Model (LLM) Integration
+* **Version Control:** GitHub (Public Repository)
+* **Deployment:** Vercel
 
 ## Developers
 * Rose Mae Caiban
