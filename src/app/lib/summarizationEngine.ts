@@ -177,6 +177,7 @@ function runAbstractive(
     .sort((a, b) => a.idx - b.idx);
 
   const openings: Record<DocumentDomain, string> = {
+    auto: `The text examines ${keywords[0] ?? 'the subject'} and its relationship to ${keywords[1] ?? 'related themes'}.`,
     general: `The text examines ${keywords[0] ?? 'the subject'} and its relationship to ${keywords[1] ?? 'related themes'}.`,
     academic: `This academic work investigates ${keywords[0] ?? 'the topic'}, with a primary focus on ${keywords[1] ?? 'key findings'} and their scholarly implications.`,
     news: `In recent developments, this report covers ${keywords[0] ?? 'current events'} and the broader impact on ${keywords[1] ?? 'stakeholders'}.`,

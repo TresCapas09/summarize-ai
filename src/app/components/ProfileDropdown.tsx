@@ -96,7 +96,7 @@ export function ProfileDropdown({ stats, onClose, onLogout }: ProfileDropdownPro
 
   // Repositioning Events
   const handleMouseDown = (e: React.MouseEvent) => {
-    if (!isEditing || !(bannerPreview || user.bannerUrl)) return;
+    if (!isEditing || !(bannerPreview || user?.bannerUrl)) return;
     setIsDragging(true);
     setStartY(e.clientY);
     setStartPos(bannerPosY);
@@ -106,7 +106,7 @@ export function ProfileDropdown({ stats, onClose, onLogout }: ProfileDropdownPro
   
   // Track Banner Loading
   useEffect(() => {
-    const url = bannerPreview || user.bannerUrl;
+    const url = bannerPreview || user?.bannerUrl;
     if (url && (bannerType === 'image' || bannerPreview)) {
       setIsBannerLoading(true);
       const img = new Image();
@@ -116,7 +116,7 @@ export function ProfileDropdown({ stats, onClose, onLogout }: ProfileDropdownPro
     } else {
       setIsBannerLoading(false);
     }
-  }, [bannerPreview, user.bannerUrl, bannerType]);
+  }, [bannerPreview, user?.bannerUrl, bannerType]);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -152,7 +152,7 @@ export function ProfileDropdown({ stats, onClose, onLogout }: ProfileDropdownPro
       await updateProfile({
         displayName: editName,
         avatar: selectedAvatar,
-        bannerType: bannerPreview || user.bannerUrl ? 'image' : 'color',
+        bannerType: bannerPreview || user?.bannerUrl ? 'image' : 'color',
         bannerColorStart: colorStart,
         bannerColorEnd: colorEnd,
         bannerPosY: bannerPosY,
@@ -225,20 +225,20 @@ export function ProfileDropdown({ stats, onClose, onLogout }: ProfileDropdownPro
   }
 
   function handleCancel() {
-    setEditName(user.displayName);
-    setSelectedAvatar(user.avatar);
-    setBannerType(user.bannerType);
-    setColorStart(user.bannerColorStart);
-    setColorEnd(user.bannerColorEnd);
-    setBannerPosY(user.bannerPosY);
+    setEditName(user?.displayName || '');
+    setSelectedAvatar(user?.avatar || 'gradient-blue');
+    setBannerType(user?.bannerType || 'color');
+    setColorStart(user?.bannerColorStart || '#6366f1');
+    setColorEnd(user?.bannerColorEnd || '#ec4899');
+    setBannerPosY(user?.bannerPosY || 50);
     resetPreviews();
     setIsEditing(false);
   }
 
   // Banner Style
-  const bannerStyle = (bannerPreview || user.bannerUrl)
+  const bannerStyle = (bannerPreview || user?.bannerUrl)
     ? { 
-        backgroundImage: `url(${bannerPreview || user.bannerUrl})`, 
+        backgroundImage: `url(${bannerPreview || user?.bannerUrl})`, 
         backgroundSize: 'cover', 
         backgroundPosition: `center ${bannerPosY}%` 
       }
@@ -251,7 +251,7 @@ export function ProfileDropdown({ stats, onClose, onLogout }: ProfileDropdownPro
         <div 
           style={bannerStyle}
           onMouseDown={handleMouseDown}
-          className={`relative h-28 flex items-center justify-center group select-none transition-shadow ${isEditing && (bannerPreview || user.bannerUrl) ? (isDragging ? 'cursor-grabbing ring-2 ring-indigo-500 z-10' : 'cursor-grab hover:ring-2 hover:ring-indigo-500/50') : 'cursor-default'}`}
+          className={`relative h-28 flex items-center justify-center group select-none transition-shadow ${isEditing && (bannerPreview || user?.bannerUrl) ? (isDragging ? 'cursor-grabbing ring-2 ring-indigo-500 z-10' : 'cursor-grab hover:ring-2 hover:ring-indigo-500/50') : 'cursor-default'}`}
         >
           {/* Skeleton Overlay */}
           {isBannerLoading && (
@@ -263,7 +263,7 @@ export function ProfileDropdown({ stats, onClose, onLogout }: ProfileDropdownPro
           
           {isEditing && (
             <div className="absolute inset-0 z-10 flex flex-col items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-              {(bannerPreview || user.bannerUrl) ? (
+              {(bannerPreview || user?.bannerUrl) ? (
                 <div className="flex flex-col items-center bg-black/40 p-2 rounded-lg backdrop-blur-sm">
                   <Move className="w-5 h-5 mb-1 animate-pulse" />
                   <span className="text-[10px] uppercase font-bold tracking-wider">Drag to reposition</span>
@@ -282,7 +282,7 @@ export function ProfileDropdown({ stats, onClose, onLogout }: ProfileDropdownPro
               >
                 <Camera className="w-4 h-4" />
               </button>
-              {(bannerPreview || user.bannerUrl) && (
+              {(bannerPreview || user?.bannerUrl) && (
                 <button 
                   onClick={(e) => { e.stopPropagation(); handleRemoveBanner(); }}
                   className="p-1.5 bg-red-500/80 hover:bg-red-600 text-white rounded-full transition-colors shadow-lg"
@@ -302,8 +302,8 @@ export function ProfileDropdown({ stats, onClose, onLogout }: ProfileDropdownPro
           <div className="relative inline-block group">
             <div className="bg-white dark:bg-slate-900 rounded-full p-1 shadow-xl">
               <Avatar 
-                avatarId={user.avatar} 
-                avatarUrl={avatarPreview || user.avatarUrl} 
+                avatarId={user?.avatar || 'gradient-blue'} 
+                avatarUrl={avatarPreview || user?.avatarUrl} 
                 size="xl" 
               />
             </div>
@@ -315,7 +315,7 @@ export function ProfileDropdown({ stats, onClose, onLogout }: ProfileDropdownPro
                 >
                   <Camera className="w-6 h-6" />
                 </button>
-                {(avatarPreview || user.avatarUrl) && (
+                {(avatarPreview || user?.avatarUrl) && (
                   <button 
                     onClick={(e) => { e.stopPropagation(); handleRemoveAvatar(); }}
                     className="absolute -top-1 -right-1 p-1 bg-red-500 hover:bg-red-600 text-white rounded-full transition-all shadow-lg scale-0 group-hover:scale-100"
@@ -403,8 +403,8 @@ export function ProfileDropdown({ stats, onClose, onLogout }: ProfileDropdownPro
             <div className="space-y-4">
               <div className="flex justify-between items-start">
                 <div>
-                  <h3 className="text-xl font-bold text-slate-900 dark:text-white leading-tight">{user.displayName}</h3>
-                  <p className="text-xs text-slate-500 font-medium">@{user.email.split('@')[0]}</p>
+                  <h3 className="text-xl font-bold text-slate-900 dark:text-white leading-tight">{user?.displayName}</h3>
+                  <p className="text-xs text-slate-500 font-medium">@{user?.email?.split('@')[0]}</p>
                 </div>
                 <button onClick={() => setIsEditing(true)} className="p-2 text-slate-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 rounded-lg transition-colors">
                   <Edit2 className="w-4 h-4" />

@@ -1,6 +1,9 @@
 /** Summarization algorithm: extract sentences vs. reformulate content */
 export type SummarizationMethod = 'extractive' | 'abstractive';
 
+/** Actions that can be performed on a text snippet */
+export type SnippetAction = 'summarize' | 'simplify' | 'keypoints' | 'expand';
+
 /** User-friendly summarization modes */
 export type SummarizationMode = 'precise_summary' | 'readable_summary' | 'quick_digest';
 

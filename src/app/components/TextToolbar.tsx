@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { Sparkles, Zap, List, BookOpen, Loader2 } from 'lucide-react';
-import type { SnippetAction } from '../lib/aiService';
+import type { SnippetAction } from '../types/summary';
 
 interface TextToolbarProps {
   /** Pixel position from the viewport top where the toolbar should anchor */

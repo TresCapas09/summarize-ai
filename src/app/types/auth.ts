@@ -25,5 +25,6 @@ export interface AuthContextType {
   uploadAvatar: (file: File) => Promise<string>;
   uploadBanner: (file: File) => Promise<string>;
   updatePassword: (currentPassword: string, newPassword: string) => Promise<void>;
+  sendPasswordReset: (email: string) => Promise<void>;
   deleteAccount: (password: string) => Promise<void>;
 }
